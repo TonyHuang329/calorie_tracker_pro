@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # calorie_tracker_app_pro
 
 A new Flutter project.
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# calorie_tracker_pro
+>>>>>>> 6672eb3088fabb14d7c4f0275dcbd5e061b7480f

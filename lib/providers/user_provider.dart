@@ -1,14 +1,17 @@
+// lib/providers/user_provider.dart
+
 import 'package:flutter/foundation.dart';
 import '../models/user_profile.dart';
 import '../models/health_goal.dart';
 import '../services/database_service.dart';
 import '../utils/calorie_calculator.dart';
 
-/// 用户相关状态管理
+/// User-related state management
+/// Handles user profile, health goals, and related calculations
 class UserProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
 
-  // 私有变量
+  // Private variables
   UserProfile? _userProfile;
   HealthGoal? _currentHealthGoal;
   bool _isLoading = false;
@@ -20,7 +23,7 @@ class UserProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // 计算属性
+  // Computed properties
   double? get currentBMI {
     if (_userProfile == null) return null;
     return CalorieCalculator.calculateBMI(
@@ -45,20 +48,20 @@ class UserProvider extends ChangeNotifier {
   bool get hasCompleteProfile => _userProfile != null;
   bool get hasHealthGoal => _currentHealthGoal != null;
 
-  /// 加载用户配置
+  /// Load user profile
   Future<void> loadUserProfile() async {
     _setLoading(true);
     try {
       _userProfile = await _databaseService.getUserProfile();
       clearError();
     } catch (e) {
-      _setError('加载用户配置失败: $e');
+      _setError('Failed to load user profile: $e');
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 保存或更新用户配置
+  /// Save or update user profile
   Future<bool> saveUserProfile(UserProfile profile) async {
     _setLoading(true);
     try {
@@ -66,7 +69,7 @@ class UserProvider extends ChangeNotifier {
       _userProfile = profile;
       clearError();
 
-      // 如果没有健康目标，自动创建默认目标
+      // Auto-create default health goal if none exists
       if (_currentHealthGoal == null) {
         await _createDefaultHealthGoal();
       }
@@ -74,14 +77,14 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _setError('保存用户配置失败: $e');
+      _setError('Failed to save user profile: $e');
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 更新用户体重
+  /// Update user weight
   Future<bool> updateWeight(double newWeight) async {
     if (_userProfile == null) return false;
 
@@ -89,7 +92,7 @@ class UserProvider extends ChangeNotifier {
     return await saveUserProfile(updatedProfile);
   }
 
-  /// 更新用户身高
+  /// Update user height
   Future<bool> updateHeight(double newHeight) async {
     if (_userProfile == null) return false;
 
@@ -97,7 +100,7 @@ class UserProvider extends ChangeNotifier {
     return await saveUserProfile(updatedProfile);
   }
 
-  /// 更新活动水平
+  /// Update activity level
   Future<bool> updateActivityLevel(String newActivityLevel) async {
     if (_userProfile == null) return false;
 
@@ -105,7 +108,7 @@ class UserProvider extends ChangeNotifier {
         _userProfile!.copyWith(activityLevel: newActivityLevel);
     final success = await saveUserProfile(updatedProfile);
 
-    // 更新活动水平后，重新计算健康目标
+    // Recalculate health goal after activity level change
     if (success && _currentHealthGoal != null) {
       await _updateHealthGoalBasedOnProfile();
     }
@@ -113,20 +116,20 @@ class UserProvider extends ChangeNotifier {
     return success;
   }
 
-  /// 加载当前健康目标
+  /// Load current health goal
   Future<void> loadCurrentHealthGoal() async {
     _setLoading(true);
     try {
       _currentHealthGoal = await _databaseService.getCurrentHealthGoal();
       clearError();
     } catch (e) {
-      _setError('加载健康目标失败: $e');
+      _setError('Failed to load health goal: $e');
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 保存或更新健康目标
+  /// Save or update health goal
   Future<bool> saveHealthGoal(HealthGoal goal) async {
     _setLoading(true);
     try {
@@ -136,14 +139,14 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _setError('保存健康目标失败: $e');
+      _setError('Failed to save health goal: $e');
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 创建默认健康目标
+  /// Create default health goal
   Future<void> _createDefaultHealthGoal() async {
     if (_userProfile == null) return;
 
@@ -156,11 +159,11 @@ class UserProvider extends ChangeNotifier {
       await _databaseService.insertOrUpdateCurrentHealthGoal(defaultGoal);
       _currentHealthGoal = defaultGoal;
     } catch (e) {
-      _setError('创建默认健康目标失败: $e');
+      _setError('Failed to create default health goal: $e');
     }
   }
 
-  /// 根据用户配置更新健康目标
+  /// Update health goal based on user profile changes
   Future<void> _updateHealthGoalBasedOnProfile() async {
     if (_userProfile == null || _currentHealthGoal == null) return;
 
@@ -170,7 +173,7 @@ class UserProvider extends ChangeNotifier {
         goalType: _currentHealthGoal!.goalType ?? 'maintain',
       );
 
-      // 保持原有的创建时间和备注
+      // Keep original creation time and notes
       final finalGoal = updatedGoal.copyWith(
         id: _currentHealthGoal!.id,
         createdAt: _currentHealthGoal!.createdAt,
@@ -180,11 +183,11 @@ class UserProvider extends ChangeNotifier {
 
       await saveHealthGoal(finalGoal);
     } catch (e) {
-      _setError('更新健康目标失败: $e');
+      _setError('Failed to update health goal: $e');
     }
   }
 
-  /// 设置新的健康目标类型
+  /// Set new health goal type
   Future<bool> setGoalType(String goalType,
       {double weeklyWeightChange = 0.0}) async {
     if (_userProfile == null) return false;
@@ -196,7 +199,7 @@ class UserProvider extends ChangeNotifier {
         weeklyWeightChange: weeklyWeightChange,
       );
 
-      // 如果已有目标，保持原有信息
+      // Keep existing goal info if available
       if (_currentHealthGoal != null) {
         final updatedGoal = newGoal.copyWith(
           id: _currentHealthGoal!.id,
@@ -209,12 +212,12 @@ class UserProvider extends ChangeNotifier {
         return await saveHealthGoal(newGoal);
       }
     } catch (e) {
-      _setError('设置健康目标失败: $e');
+      _setError('Failed to set health goal: $e');
       return false;
     }
   }
 
-  /// 自定义健康目标
+  /// Set custom health goal
   Future<bool> setCustomGoal({
     required double targetCalories,
     required double targetProtein,
@@ -237,52 +240,60 @@ class UserProvider extends ChangeNotifier {
 
       return await saveHealthGoal(customGoal);
     } catch (e) {
-      _setError('设置自定义目标失败: $e');
+      _setError('Failed to set custom goal: $e');
       return false;
     }
   }
 
-  /// 获取健康建议
+  /// Get health recommendations
   List<String> getHealthRecommendations() {
     final recommendations = <String>[];
 
     if (_userProfile == null) {
-      recommendations.add('请完善个人资料以获取个性化建议');
+      recommendations.add(
+          'Please complete your profile to get personalized recommendations');
       return recommendations;
     }
 
     final bmi = currentBMI;
     if (bmi != null) {
       if (bmi < 18.5) {
-        recommendations.add('您的BMI偏低，建议增加健康饮食和适量运动');
-        recommendations.add('可以考虑增加蛋白质和健康脂肪的摄入');
+        recommendations.add(
+            'Your BMI is below normal range. Consider gaining weight through healthy diet and exercise');
+        recommendations
+            .add('You may want to increase protein and healthy fat intake');
       } else if (bmi > 25) {
-        recommendations.add('您的BMI偏高，建议控制卡路里摄入并增加运动');
-        recommendations.add('推荐采用均衡饮食，减少加工食品');
+        recommendations.add(
+            'Your BMI is above normal range. Consider weight management through balanced diet and exercise');
+        recommendations
+            .add('Focus on portion control and regular physical activity');
       } else {
-        recommendations.add('您的BMI在正常范围内，继续保持健康的生活方式');
+        recommendations.add(
+            'Your BMI is in the healthy range. Keep up your current lifestyle');
       }
     }
 
-    // 根据年龄给出建议
+    // Age-based recommendations
     if (_userProfile!.age >= 50) {
-      recommendations.add('建议增加钙质和维生素D的摄入');
-      recommendations.add('可以进行低强度的有氧运动和力量训练');
+      recommendations.add('Consider increasing calcium and vitamin D intake');
+      recommendations.add('Include low-impact exercises and strength training');
     } else if (_userProfile!.age <= 25) {
-      recommendations.add('年轻时期是建立良好饮食习惯的关键时期');
-      recommendations.add('可以进行多样化的运动来提高身体素质');
+      recommendations.add('Great time to establish healthy eating habits');
+      recommendations
+          .add('Vary your exercise routine to build overall fitness');
     }
 
-    // 根据活动水平给出建议
+    // Activity level recommendations
     if (_userProfile!.activityLevel == 'sedentary') {
-      recommendations.add('久坐生活方式对健康不利，建议增加日常活动');
-      recommendations.add('可以从每天步行30分钟开始');
+      recommendations.add(
+          'Sedentary lifestyle may be harmful to health. Try to increase daily activity');
+      recommendations.add('You can start with 30 minutes of walking daily');
     }
 
     return recommendations;
   }
 
-  /// 计算目标达成情况
+  /// Calculate goal progress
   Map<String, double> calculateGoalProgress(Map<String, double> dailyIntake) {
     if (_currentHealthGoal == null) {
       return {
@@ -307,7 +318,7 @@ class UserProvider extends ChangeNotifier {
     };
   }
 
-  /// 预测达到目标体重的时间
+  /// Predict time to reach goal weight
   int? calculateTimeToGoalWeight(double targetWeight) {
     if (_userProfile == null || _currentHealthGoal == null) return null;
 
@@ -322,26 +333,26 @@ class UserProvider extends ChangeNotifier {
     );
   }
 
-  /// 验证用户输入数据
+  /// Validate user profile
   String? validateUserProfile(UserProfile profile) {
     if (profile.name.isEmpty) {
-      return '姓名不能为空';
+      return 'Name cannot be empty';
     }
 
-    if (profile.age < 10 || profile.age > 120) {
-      return '年龄必须在10-120岁之间';
+    if (profile.age < 13 || profile.age > 120) {
+      return 'Age must be between 13 and 120 years';
     }
 
     if (profile.height < 100 || profile.height > 250) {
-      return '身高必须在100-250厘米之间';
+      return 'Height must be between 100 and 250 cm';
     }
 
-    if (profile.weight < 20 || profile.weight > 300) {
-      return '体重必须在20-300公斤之间';
+    if (profile.weight < 30 || profile.weight > 300) {
+      return 'Weight must be between 30 and 300 kg';
     }
 
     if (!['male', 'female'].contains(profile.gender)) {
-      return '请选择正确的性别';
+      return 'Please select a valid gender';
     }
 
     const validActivityLevels = [
@@ -352,64 +363,111 @@ class UserProvider extends ChangeNotifier {
       'very_active'
     ];
     if (!validActivityLevels.contains(profile.activityLevel)) {
-      return '请选择正确的活动水平';
+      return 'Please select a valid activity level';
     }
 
-    return null; // 验证通过
+    return null; // Validation passed
   }
 
-  /// 验证健康目标数据
+  /// Validate health goal
   String? validateHealthGoal(HealthGoal goal) {
     if (goal.targetCalories < 1000 || goal.targetCalories > 5000) {
-      return '目标卡路里必须在1000-5000之间';
+      return 'Target calories must be between 1000 and 5000';
     }
 
     if (goal.targetProtein < 0 || goal.targetProtein > 300) {
-      return '目标蛋白质必须在0-300克之间';
+      return 'Target protein must be between 0 and 300 grams';
     }
 
     if (goal.targetCarbs < 0 || goal.targetCarbs > 500) {
-      return '目标碳水化合物必须在0-500克之间';
+      return 'Target carbohydrates must be between 0 and 500 grams';
     }
 
     if (goal.targetFat < 0 || goal.targetFat > 200) {
-      return '目标脂肪必须在0-200克之间';
+      return 'Target fat must be between 0 and 200 grams';
     }
 
-    // 验证宏量营养素是否合理
+    // Validate macro balance
     if (!CalorieCalculator.validateNutritionData(
       calories: goal.targetCalories,
       protein: goal.targetProtein,
       carbs: goal.targetCarbs,
       fat: goal.targetFat,
     )) {
-      return '宏量营养素配比不合理，请重新调整';
+      return 'Macronutrient distribution is unreasonable, please readjust';
     }
 
-    return null; // 验证通过
+    return null; // Validation passed
   }
 
-  /// 重置用户数据
+  /// Get BMI status for UI display
+  String get bmiStatus {
+    if (currentBMI == null) return 'unknown';
+
+    final bmi = currentBMI!;
+    if (bmi < 18.5) return 'underweight';
+    if (bmi < 25) return 'normal';
+    if (bmi < 30) return 'overweight';
+    return 'obese';
+  }
+
+  /// Get BMI color for UI display
+  String get bmiColorStatus {
+    if (currentBMI == null) return 'grey';
+
+    final bmi = currentBMI!;
+    if (bmi < 18.5) return 'blue';
+    if (bmi < 25) return 'green';
+    if (bmi < 30) return 'orange';
+    return 'red';
+  }
+
+  /// Get weight status relative to ideal range
+  String get weightStatus {
+    if (_userProfile == null || idealWeightRange == null) return 'unknown';
+
+    final weight = _userProfile!.weight;
+    final range = idealWeightRange!;
+
+    if (weight < range['min']!) return 'underweight';
+    if (weight > range['max']!) return 'overweight';
+    return 'normal';
+  }
+
+  /// Get personalized protein recommendation
+  double? get recommendedProtein {
+    if (_userProfile == null) return null;
+    return CalorieCalculator.calculateProteinRequirement(_userProfile!,
+        goalType: _currentHealthGoal?.goalType ?? 'maintain');
+  }
+
+  /// Get personalized water intake recommendation
+  double? get recommendedWaterIntake {
+    if (_userProfile == null) return null;
+    return CalorieCalculator.calculateWaterIntake(_userProfile!);
+  }
+
+  /// Reset user data
   Future<void> resetUserData() async {
     _setLoading(true);
     try {
-      // 清除数据库中的用户数据
+      // Clear database user data
       await _databaseService.clearAllData();
 
-      // 重置状态
+      // Reset state
       _userProfile = null;
       _currentHealthGoal = null;
       clearError();
 
       notifyListeners();
     } catch (e) {
-      _setError('重置用户数据失败: $e');
+      _setError('Failed to reset user data: $e');
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 导出用户数据
+  /// Export user data
   Future<Map<String, dynamic>> exportUserData() async {
     try {
       return {
@@ -418,12 +476,12 @@ class UserProvider extends ChangeNotifier {
         'healthGoal': _currentHealthGoal?.toMap(),
       };
     } catch (e) {
-      _setError('导出用户数据失败: $e');
+      _setError('Failed to export user data: $e');
       return {};
     }
   }
 
-  /// 导入用户数据
+  /// Import user data
   Future<bool> importUserData(Map<String, dynamic> userData) async {
     _setLoading(true);
     try {
@@ -442,14 +500,46 @@ class UserProvider extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      _setError('导入用户数据失败: $e');
+      _setError('Failed to import user data: $e');
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 设置加载状态
+  /// Get user progress summary
+  Map<String, dynamic> getUserProgressSummary() {
+    if (_userProfile == null) return {};
+
+    final summary = <String, dynamic>{
+      'profileComplete': true,
+      'hasGoal': _currentHealthGoal != null,
+      'bmi': currentBMI,
+      'bmiCategory': bmiCategory,
+      'bmiStatus': bmiStatus,
+      'weightStatus': weightStatus,
+      'tdee': currentTDEE,
+      'idealWeightRange': idealWeightRange,
+      'age': _userProfile!.age,
+      'ageGroup': _userProfile!.ageGroup,
+      'activityLevel': _userProfile!.activityLevel,
+      'recommendedProtein': recommendedProtein,
+      'recommendedWater': recommendedWaterIntake,
+    };
+
+    if (_currentHealthGoal != null) {
+      summary.addAll({
+        'goalType': _currentHealthGoal!.goalType,
+        'targetCalories': _currentHealthGoal!.targetCalories,
+        'goalCreated': _currentHealthGoal!.createdAt,
+        'goalUpdated': _currentHealthGoal!.updatedAt,
+      });
+    }
+
+    return summary;
+  }
+
+  /// Set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
     if (loading) {
@@ -458,7 +548,7 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 设置错误信息
+  /// Set error message
   void _setError(String error) {
     _errorMessage = error;
     _isLoading = false;
@@ -468,13 +558,13 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// 清除错误信息
+  /// Clear error message
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// 清除所有状态
+  /// Clear all state
   void clearAll() {
     _userProfile = null;
     _currentHealthGoal = null;
@@ -483,8 +573,8 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    super.dispose();
+  }
 }

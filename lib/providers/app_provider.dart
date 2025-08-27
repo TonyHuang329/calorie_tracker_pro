@@ -1,10 +1,13 @@
+// lib/providers/app_provider.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 应用全局状态管理
+/// Global application state management
+/// Handles theme mode, first launch status, navigation state, and app-wide settings
 class AppProvider extends ChangeNotifier {
-  // 私有变量
+  // Private variables
   ThemeMode _themeMode = ThemeMode.system;
   bool _isFirstLaunch = true;
   int _selectedBottomNavIndex = 0;
@@ -18,47 +21,47 @@ class AppProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// 构造函数，初始化应用状态
+  /// Constructor - Initialize app state
   AppProvider() {
     _loadAppSettings();
   }
 
-  /// 从本地存储加载应用设置
+  /// Load app settings from local storage
   Future<void> _loadAppSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 加载主题模式
+      // Load theme mode
       final themeIndex = prefs.getInt('theme_mode') ?? 0;
       _themeMode = ThemeMode.values[themeIndex];
 
-      // 检查是否首次启动
+      // Check if first launch
       _isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
 
-      // 加载底部导航栏选中索引
+      // Load bottom navigation selected index
       _selectedBottomNavIndex = prefs.getInt('selected_nav_index') ?? 0;
 
       notifyListeners();
     } catch (e) {
-      _setError('加载应用设置失败: $e');
+      _setError('Failed to load app settings: $e');
     }
   }
 
-  /// 设置主题模式
+  /// Set theme mode
   Future<void> setThemeMode(ThemeMode mode) async {
     try {
       _themeMode = mode;
       notifyListeners();
 
-      // 保存到本地存储
+      // Save to local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('theme_mode', mode.index);
     } catch (e) {
-      _setError('保存主题设置失败: $e');
+      _setError('Failed to save theme settings: $e');
     }
   }
 
-  /// 切换主题模式
+  /// Toggle theme mode
   Future<void> toggleTheme() async {
     switch (_themeMode) {
       case ThemeMode.system:
@@ -73,19 +76,19 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  /// 获取当前主题模式的显示名称
+  /// Get current theme mode display name
   String get themeModeDisplayName {
     switch (_themeMode) {
       case ThemeMode.system:
-        return '跟随系统';
+        return 'Follow System';
       case ThemeMode.light:
-        return '浅色模式';
+        return 'Light Mode';
       case ThemeMode.dark:
-        return '深色模式';
+        return 'Dark Mode';
     }
   }
 
-  /// 标记应用已完成首次启动
+  /// Mark app as completed first launch
   Future<void> completeFirstLaunch() async {
     try {
       _isFirstLaunch = false;
@@ -94,11 +97,33 @@ class AppProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_first_launch', false);
     } catch (e) {
-      _setError('保存首次启动状态失败: $e');
+      _setError('Failed to save first launch status: $e');
     }
   }
 
-  /// 设置底部导航栏选中索引
+  /// Check if onboarding should be shown
+  Future<bool> shouldShowOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('show_onboarding') ?? true;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  /// Mark onboarding as completed
+  Future<void> completeOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('show_onboarding', false);
+      _isFirstLaunch = false;
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to save onboarding status: $e');
+    }
+  }
+
+  /// Set bottom navigation selected index
   Future<void> setBottomNavIndex(int index) async {
     if (index >= 0 && index <= 3) {
       _selectedBottomNavIndex = index;
@@ -108,39 +133,39 @@ class AppProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('selected_nav_index', index);
       } catch (e) {
-        _setError('保存导航栏状态失败: $e');
+        _setError('Failed to save navigation state: $e');
       }
     }
   }
 
-  /// 设置加载状态
+  /// Set loading state
   void setLoading(bool loading) {
     _isLoading = loading;
     if (loading) {
-      _errorMessage = null; // 清除之前的错误信息
+      _errorMessage = null; // Clear previous errors
     }
     notifyListeners();
   }
 
-  /// 设置错误信息
+  /// Set error message
   void _setError(String error) {
     _errorMessage = error;
     _isLoading = false;
     notifyListeners();
 
-    // 可以在这里添加错误日志记录
+    // Log errors in debug mode
     if (kDebugMode) {
       print('AppProvider Error: $error');
     }
   }
 
-  /// 清除错误信息
+  /// Clear error message
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// 重置应用状态（用于调试或用户注销）
+  /// Reset app state (for debugging or user logout)
   Future<void> resetAppState() async {
     try {
       _themeMode = ThemeMode.system;
@@ -154,22 +179,22 @@ class AppProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _setError('重置应用状态失败: $e');
+      _setError('Failed to reset app state: $e');
     }
   }
 
-  /// 获取应用版本信息
+  /// Get app version information
   Future<Map<String, String>> getAppInfo() async {
-    // 这里可以集成 package_info_plus 包来获取实际的应用信息
+    // This can integrate with package_info_plus to get actual app info
     return {
-      'appName': '卡路里追踪专业版',
+      'appName': 'Calorie Tracker Pro',
       'packageName': 'com.example.calorie_tracker_app_pro',
       'version': '1.0.0',
       'buildNumber': '1',
     };
   }
 
-  /// 检查是否需要显示新功能引导
+  /// Check if feature introduction should be shown
   Future<bool> shouldShowFeatureIntroduction(String featureName) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -180,18 +205,18 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  /// 标记功能引导已显示
+  /// Mark feature introduction as shown
   Future<void> markFeatureIntroductionShown(String featureName) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final key = 'feature_intro_$featureName';
       await prefs.setBool(key, false);
     } catch (e) {
-      _setError('保存功能引导状态失败: $e');
+      _setError('Failed to save feature introduction status: $e');
     }
   }
 
-  /// 获取应用使用统计
+  /// Get app usage statistics
   Future<Map<String, dynamic>> getAppUsageStats() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -218,29 +243,29 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  /// 记录应用启动
+  /// Record app launch
   Future<void> recordAppLaunch() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 设置安装日期（如果是第一次）
+      // Set install date (if first time)
       if (!prefs.containsKey('install_date')) {
         await prefs.setString('install_date', DateTime.now().toIso8601String());
       }
 
-      // 增加启动次数
+      // Increment launch count
       final launchCount = (prefs.getInt('launch_count') ?? 0) + 1;
       await prefs.setInt('launch_count', launchCount);
 
-      // 记录最后启动日期
+      // Record last launch date
       await prefs.setString(
           'last_launch_date', DateTime.now().toIso8601String());
     } catch (e) {
-      _setError('记录应用启动失败: $e');
+      _setError('Failed to record app launch: $e');
     }
   }
 
-  /// 计算应用使用天数
+  /// Calculate days of app usage
   int _calculateDaysUsed(String installDate) {
     try {
       final install = DateTime.parse(installDate);
@@ -251,28 +276,28 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  /// 处理深链接或应用快捷方式
+  /// Handle app shortcuts or deep links
   void handleAppShortcut(String shortcutType) {
     switch (shortcutType) {
       case 'add_food':
-        setBottomNavIndex(0); // 跳转到主页
-        // 这里可以添加额外的导航逻辑
+        setBottomNavIndex(0); // Navigate to home
+        // Additional navigation logic can be added here
         break;
       case 'view_stats':
-        setBottomNavIndex(2); // 跳转到历史页面
+        setBottomNavIndex(2); // Navigate to history
         break;
       case 'settings':
-        setBottomNavIndex(3); // 跳转到设置页面
+        setBottomNavIndex(3); // Navigate to settings
         break;
       default:
-        setBottomNavIndex(0); // 默认跳转到主页
+        setBottomNavIndex(0); // Default to home
     }
   }
 
-  /// 检查应用更新（可以与应用商店API集成）
+  /// Check for app updates (can integrate with app store APIs)
   Future<Map<String, dynamic>> checkForUpdates() async {
-    // 这里可以实现检查应用更新的逻辑
-    // 例如：与应用商店API或自己的服务器通信
+    // Implementation for checking app updates
+    // Can integrate with app store APIs or custom server
 
     return {
       'hasUpdate': false,
@@ -282,7 +307,7 @@ class AppProvider extends ChangeNotifier {
     };
   }
 
-  /// 导出应用设置
+  /// Export app settings
   Future<Map<String, dynamic>> exportSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -298,12 +323,12 @@ class AppProvider extends ChangeNotifier {
         'settings': settings,
       };
     } catch (e) {
-      _setError('导出设置失败: $e');
+      _setError('Failed to export settings: $e');
       return {};
     }
   }
 
-  /// 导入应用设置
+  /// Import app settings
   Future<void> importSettings(Map<String, dynamic> settingsData) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -325,11 +350,224 @@ class AppProvider extends ChangeNotifier {
           }
         }
 
-        // 重新加载设置
+        // Reload settings
         await _loadAppSettings();
       }
     } catch (e) {
-      _setError('导入设置失败: $e');
+      _setError('Failed to import settings: $e');
+    }
+  }
+
+  /// Get localization preferences
+  Future<Map<String, dynamic>> getLocalizationSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      return {
+        'language': prefs.getString('language') ?? 'en',
+        'country': prefs.getString('country') ?? 'US',
+        'dateFormat': prefs.getString('date_format') ?? 'MM/dd/yyyy',
+        'timeFormat': prefs.getString('time_format') ?? '12h',
+        'measurementSystem':
+            prefs.getString('measurement_system') ?? 'imperial',
+      };
+    } catch (e) {
+      return {
+        'language': 'en',
+        'country': 'US',
+        'dateFormat': 'MM/dd/yyyy',
+        'timeFormat': '12h',
+        'measurementSystem': 'imperial',
+      };
+    }
+  }
+
+  /// Set localization preference
+  Future<void> setLocalizationSetting(String key, String value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, value);
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to save localization setting: $e');
+    }
+  }
+
+  /// Get notification preferences
+  Future<Map<String, dynamic>> getNotificationSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      return {
+        'dailyReminders': prefs.getBool('daily_reminders') ?? true,
+        'mealReminders': prefs.getBool('meal_reminders') ?? true,
+        'goalAchievements': prefs.getBool('goal_achievements') ?? true,
+        'weeklyReports': prefs.getBool('weekly_reports') ?? false,
+        'reminderTime': prefs.getString('reminder_time') ?? '09:00',
+      };
+    } catch (e) {
+      return {
+        'dailyReminders': true,
+        'mealReminders': true,
+        'goalAchievements': true,
+        'weeklyReports': false,
+        'reminderTime': '09:00',
+      };
+    }
+  }
+
+  /// Set notification preference
+  Future<void> setNotificationSetting(String key, dynamic value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (value is bool) {
+        await prefs.setBool(key, value);
+      } else if (value is String) {
+        await prefs.setString(key, value);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to save notification setting: $e');
+    }
+  }
+
+  /// Get data and privacy settings
+  Future<Map<String, dynamic>> getPrivacySettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      return {
+        'analyticsEnabled': prefs.getBool('analytics_enabled') ?? false,
+        'crashReportingEnabled':
+            prefs.getBool('crash_reporting_enabled') ?? true,
+        'dataBackupEnabled': prefs.getBool('data_backup_enabled') ?? true,
+        'dataRetentionDays': prefs.getInt('data_retention_days') ?? 365,
+      };
+    } catch (e) {
+      return {
+        'analyticsEnabled': false,
+        'crashReportingEnabled': true,
+        'dataBackupEnabled': true,
+        'dataRetentionDays': 365,
+      };
+    }
+  }
+
+  /// Set privacy preference
+  Future<void> setPrivacySetting(String key, dynamic value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (value is bool) {
+        await prefs.setBool(key, value);
+      } else if (value is int) {
+        await prefs.setInt(key, value);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to save privacy setting: $e');
+    }
+  }
+
+  /// Get accessibility settings
+  Future<Map<String, dynamic>> getAccessibilitySettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      return {
+        'highContrast': prefs.getBool('high_contrast') ?? false,
+        'largeText': prefs.getBool('large_text') ?? false,
+        'reducedMotion': prefs.getBool('reduced_motion') ?? false,
+        'screenReader': prefs.getBool('screen_reader') ?? false,
+      };
+    } catch (e) {
+      return {
+        'highContrast': false,
+        'largeText': false,
+        'reducedMotion': false,
+        'screenReader': false,
+      };
+    }
+  }
+
+  /// Set accessibility preference
+  Future<void> setAccessibilitySetting(String key, bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(key, value);
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to save accessibility setting: $e');
+    }
+  }
+
+  /// Clear all user data (for account deletion or reset)
+  Future<void> clearAllUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Keep only essential app settings
+      final themeMode = prefs.getInt('theme_mode') ?? 0;
+      final language = prefs.getString('language') ?? 'en';
+
+      await prefs.clear();
+
+      // Restore essential settings
+      await prefs.setInt('theme_mode', themeMode);
+      await prefs.setString('language', language);
+      await prefs.setBool('is_first_launch', true);
+
+      // Reset state
+      _isFirstLaunch = true;
+      _selectedBottomNavIndex = 0;
+      _errorMessage = null;
+
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to clear user data: $e');
+    }
+  }
+
+  /// Get app performance metrics
+  Future<Map<String, dynamic>> getPerformanceMetrics() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      return {
+        'averageStartupTime': prefs.getDouble('avg_startup_time') ?? 0.0,
+        'crashCount': prefs.getInt('crash_count') ?? 0,
+        'lastCrashDate': prefs.getString('last_crash_date'),
+        'memoryUsage': prefs.getDouble('memory_usage') ?? 0.0,
+      };
+    } catch (e) {
+      return {
+        'averageStartupTime': 0.0,
+        'crashCount': 0,
+        'lastCrashDate': null,
+        'memoryUsage': 0.0,
+      };
+    }
+  }
+
+  /// Record performance metric
+  Future<void> recordPerformanceMetric(String key, dynamic value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (value is double) {
+        await prefs.setDouble(key, value);
+      } else if (value is int) {
+        await prefs.setInt(key, value);
+      } else if (value is String) {
+        await prefs.setString(key, value);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to record performance metric: $e');
+      }
     }
   }
 

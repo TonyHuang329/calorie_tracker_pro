@@ -14,7 +14,7 @@ class AddFoodScreen extends StatefulWidget {
 class _AddFoodScreenState extends State<AddFoodScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // 表单控制器
+  // Form controllers
   final _nameController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
@@ -23,11 +23,11 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
   final _quantityController = TextEditingController();
   final _unitController = TextEditingController();
 
-  // 表单状态
+  // Form state
   String _selectedMealType = 'breakfast';
   DateTime _selectedDate = DateTime.now();
 
-  // 页面状态
+  // Page state
   bool _isEdit = false;
   bool _isQuickAdd = false;
   FoodItem? _editingFood;
@@ -82,7 +82,8 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? '编辑食物' : (_isQuickAdd ? '快速添加' : '添加食物')),
+        title: Text(
+            _isEdit ? 'Edit Food' : (_isQuickAdd ? 'Quick Add' : 'Add Food')),
         actions: [
           Consumer<NutritionProvider>(
             builder: (context, nutritionProvider, child) {
@@ -98,7 +99,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
               }
               return TextButton(
                 onPressed: _saveFood,
-                child: const Text('保存'),
+                child: const Text('Save'),
               );
             },
           ),
@@ -155,7 +156,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '基本信息',
+              'Basic Information',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -164,13 +165,13 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: '食物名称',
-                hintText: '请输入食物名称',
+                labelText: 'Food Name',
+                hintText: 'Enter food name',
                 prefixIcon: Icon(Icons.restaurant),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return '请输入食物名称';
+                  return 'Please enter food name';
                 }
                 return null;
               },
@@ -179,19 +180,19 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
             TextFormField(
               controller: _caloriesController,
               decoration: const InputDecoration(
-                labelText: '卡路里',
-                hintText: '请输入卡路里',
+                labelText: 'Calories',
+                hintText: 'Enter calories',
                 prefixIcon: Icon(Icons.local_fire_department),
                 suffixText: 'kcal',
               ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return '请输入卡路里';
+                  return 'Please enter calories';
                 }
                 final calories = double.tryParse(value.trim());
                 if (calories == null || calories < 0) {
-                  return '请输入有效的卡路里值';
+                  return 'Please enter a valid calorie value';
                 }
                 return null;
               },
@@ -210,7 +211,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '营养成分',
+              'Nutrition Information',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -222,18 +223,18 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
                   child: TextFormField(
                     controller: _proteinController,
                     decoration: const InputDecoration(
-                      labelText: '蛋白质',
+                      labelText: 'Protein',
                       hintText: '0',
                       suffixText: 'g',
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return '请输入蛋白质含量';
+                        return 'Please enter protein content';
                       }
                       final protein = double.tryParse(value.trim());
                       if (protein == null || protein < 0) {
-                        return '请输入有效值';
+                        return 'Please enter a valid value';
                       }
                       return null;
                     },
@@ -244,18 +245,18 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
                   child: TextFormField(
                     controller: _carbsController,
                     decoration: const InputDecoration(
-                      labelText: '碳水化合物',
+                      labelText: 'Carbohydrates',
                       hintText: '0',
                       suffixText: 'g',
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return '请输入碳水含量';
+                        return 'Please enter carbs content';
                       }
                       final carbs = double.tryParse(value.trim());
                       if (carbs == null || carbs < 0) {
-                        return '请输入有效值';
+                        return 'Please enter a valid value';
                       }
                       return null;
                     },
@@ -266,18 +267,18 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
                   child: TextFormField(
                     controller: _fatController,
                     decoration: const InputDecoration(
-                      labelText: '脂肪',
+                      labelText: 'Fat',
                       hintText: '0',
                       suffixText: 'g',
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return '请输入脂肪含量';
+                        return 'Please enter fat content';
                       }
                       final fat = double.tryParse(value.trim());
                       if (fat == null || fat < 0) {
-                        return '请输入有效值';
+                        return 'Please enter a valid value';
                       }
                       return null;
                     },
@@ -299,7 +300,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '份量信息',
+              'Serving Information',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -312,7 +313,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
                   child: TextFormField(
                     controller: _quantityController,
                     decoration: const InputDecoration(
-                      labelText: '份量',
+                      labelText: 'Quantity',
                       hintText: '100',
                     ),
                     keyboardType: TextInputType.number,
@@ -323,7 +324,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
                   child: TextFormField(
                     controller: _unitController,
                     decoration: const InputDecoration(
-                      labelText: '单位',
+                      labelText: 'Unit',
                       hintText: 'g',
                     ),
                   ),
@@ -344,16 +345,16 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '餐次和日期',
+              'Meal and Date',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 16),
 
-            // 餐次选择
+            // Meal type selection
             Text(
-              '餐次',
+              'Meal Type',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -378,10 +379,10 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
 
             const SizedBox(height: 16),
 
-            // 日期选择
+            // Date selection
             ListTile(
               leading: const Icon(Icons.calendar_today),
-              title: const Text('日期'),
+              title: const Text('Date'),
               subtitle: Text(
                 '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
               ),
@@ -397,10 +398,10 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
 
   List<Map<String, String>> _getMealTypeOptions() {
     return [
-      {'value': 'breakfast', 'title': '早餐'},
-      {'value': 'lunch', 'title': '午餐'},
-      {'value': 'dinner', 'title': '晚餐'},
-      {'value': 'snack', 'title': '零食'},
+      {'value': 'breakfast', 'title': 'Breakfast'},
+      {'value': 'lunch', 'title': 'Lunch'},
+      {'value': 'dinner', 'title': 'Dinner'},
+      {'value': 'snack', 'title': 'Snack'},
     ];
   }
 
@@ -427,7 +428,7 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
     final nutritionProvider =
         Provider.of<NutritionProvider>(context, listen: false);
 
-    // 为快速添加模式设置默认营养值
+    // Set default nutrition values for quick add mode
     double protein = 0, carbs = 0, fat = 0;
     if (!_isQuickAdd) {
       protein = double.parse(_proteinController.text.trim());
@@ -462,7 +463,9 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEdit ? '食物更新成功' : '食物添加成功'),
+          content: Text(_isEdit
+              ? 'Food updated successfully'
+              : 'Food added successfully'),
           backgroundColor: Colors.green,
         ),
       );

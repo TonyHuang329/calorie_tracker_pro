@@ -1,3 +1,5 @@
+// lib/services/database_service.dart
+
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -11,22 +13,22 @@ class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
 
-  // 私有构造函数，实现单例模式
+  // Private constructor to implement singleton pattern
   DatabaseService._internal();
 
-  // 获取单例实例
+  // Get singleton instance
   factory DatabaseService() {
     _instance ??= DatabaseService._internal();
     return _instance!;
   }
 
-  // 获取数据库实例
+  // Get database instance
   Future<Database> get database async {
     _database ??= await _initDB();
     return _database!;
   }
 
-  // 初始化数据库
+  // Initialize database
   Future<Database> _initDB() async {
     try {
       final documentsDirectory = await getApplicationDocumentsDirectory();
@@ -43,10 +45,10 @@ class DatabaseService {
     }
   }
 
-  // 创建数据库表
+  // Create database tables
   Future<void> _createDB(Database db, int version) async {
     try {
-      // 创建用户配置表
+      // Create user profile table
       await db.execute('''
         CREATE TABLE users(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +61,7 @@ class DatabaseService {
         )
       ''');
 
-      // 创建食物条目表
+      // Create food items table
       await db.execute('''
         CREATE TABLE food_items(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +77,7 @@ class DatabaseService {
         )
       ''');
 
-      // 创建健康目标表
+      // Create health goals table
       await db.execute('''
         CREATE TABLE health_goals(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,7 +92,7 @@ class DatabaseService {
         )
       ''');
 
-      // 创建索引以提高查询性能
+      // Create indexes to improve query performance
       await db.execute('CREATE INDEX idx_food_items_date ON food_items(date)');
       await db.execute(
           'CREATE INDEX idx_food_items_meal_type ON food_items(mealType)');
@@ -99,29 +101,29 @@ class DatabaseService {
     }
   }
 
-  // 数据库升级
+  // Database upgrade
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    // 未来版本升级时的逻辑
+    // Logic for future version upgrades
     if (oldVersion < newVersion) {
-      // 执行升级脚本
+      // Execute upgrade scripts
     }
   }
 
-  // === 用户配置相关操作 ===
+  // === User profile related operations ===
 
-  // 插入或更新用户配置（只保留一个用户）
+  // Insert or update user profile (keep only one user)
   Future<int> insertOrUpdateUserProfile(UserProfile profile) async {
     try {
       final db = await database;
 
-      // 先检查是否已有用户
+      // Check if user already exists
       final existingUsers = await db.query('users');
 
       if (existingUsers.isEmpty) {
-        // 插入新用户
+        // Insert new user
         return await db.insert('users', profile.toMap());
       } else {
-        // 更新现有用户
+        // Update existing user
         return await db.update(
           'users',
           profile.toMap(),
@@ -134,7 +136,7 @@ class DatabaseService {
     }
   }
 
-  // 获取用户配置
+  // Get user profile
   Future<UserProfile?> getUserProfile() async {
     try {
       final db = await database;
@@ -148,9 +150,9 @@ class DatabaseService {
     }
   }
 
-  // === 食物条目相关操作 ===
+  // === Food item related operations ===
 
-  // 插入食物条目
+  // Insert food item
   Future<int> insertFoodItem(FoodItem foodItem) async {
     try {
       final db = await database;
@@ -160,7 +162,7 @@ class DatabaseService {
     }
   }
 
-  // 更新食物条目
+  // Update food item
   Future<int> updateFoodItem(FoodItem foodItem) async {
     try {
       final db = await database;
@@ -175,7 +177,7 @@ class DatabaseService {
     }
   }
 
-  // 删除食物条目
+  // Delete food item
   Future<int> deleteFoodItem(int id) async {
     try {
       final db = await database;
@@ -189,7 +191,7 @@ class DatabaseService {
     }
   }
 
-  // 根据日期获取食物条目
+  // Get food items by date
   Future<List<FoodItem>> getFoodItemsByDate(DateTime date) async {
     try {
       final db = await database;
@@ -208,7 +210,7 @@ class DatabaseService {
     }
   }
 
-  // 根据日期范围获取食物条目
+  // Get food items by date range
   Future<List<FoodItem>> getFoodItemsByDateRange(
       DateTime startDate, DateTime endDate) async {
     try {
@@ -229,7 +231,7 @@ class DatabaseService {
     }
   }
 
-  // 根据餐次类型获取食物条目
+  // Get food items by meal type
   Future<List<FoodItem>> getFoodItemsByMealType(
       DateTime date, String mealType) async {
     try {
@@ -249,7 +251,7 @@ class DatabaseService {
     }
   }
 
-  // 获取所有食物条目
+  // Get all food items
   Future<List<FoodItem>> getAllFoodItems() async {
     try {
       final db = await database;
@@ -265,9 +267,9 @@ class DatabaseService {
     }
   }
 
-  // === 健康目标相关操作 ===
+  // === Health goal related operations ===
 
-  // 插入健康目标
+  // Insert health goal
   Future<int> insertHealthGoal(HealthGoal goal) async {
     try {
       final db = await database;
@@ -277,7 +279,7 @@ class DatabaseService {
     }
   }
 
-  // 更新健康目标
+  // Update health goal
   Future<int> updateHealthGoal(HealthGoal goal) async {
     try {
       final db = await database;
@@ -292,22 +294,22 @@ class DatabaseService {
     }
   }
 
-  // 插入或更新当前健康目标（只保留最新的一个）
+  // Insert or update current health goal (keep only the latest one)
   Future<int> insertOrUpdateCurrentHealthGoal(HealthGoal goal) async {
     try {
       final db = await database;
 
-      // 先删除所有旧的目标
+      // Delete all old goals first
       await db.delete('health_goals');
 
-      // 插入新目标
+      // Insert new goal
       return await db.insert('health_goals', goal.toMap());
     } catch (e) {
       throw Exception('Failed to insert/update current health goal: $e');
     }
   }
 
-  // 获取当前健康目标
+  // Get current health goal
   Future<HealthGoal?> getCurrentHealthGoal() async {
     try {
       final db = await database;
@@ -325,7 +327,7 @@ class DatabaseService {
     }
   }
 
-  // 删除健康目标
+  // Delete health goal
   Future<int> deleteHealthGoal(int id) async {
     try {
       final db = await database;
@@ -339,9 +341,9 @@ class DatabaseService {
     }
   }
 
-  // === 统计和分析相关操作 ===
+  // === Statistics and analysis related operations ===
 
-  // 获取指定日期的营养摄入总计
+  // Get daily nutrition summary for specified date
   Future<Map<String, double>> getDailyNutritionSummary(DateTime date) async {
     try {
       final db = await database;
@@ -379,48 +381,11 @@ class DatabaseService {
     }
   }
 
-  // 获取按餐次分组的营养摄入
-  Future<Map<String, Map<String, double>>> getDailyNutritionByMeal(
-      DateTime date) async {
-    try {
-      final db = await database;
-      final dateString = date.toIso8601String().substring(0, 10);
-
-      final List<Map<String, dynamic>> result = await db.rawQuery('''
-        SELECT 
-          mealType,
-          SUM(calories) as totalCalories,
-          SUM(protein) as totalProtein,
-          SUM(carbs) as totalCarbs,
-          SUM(fat) as totalFat
-        FROM food_items 
-        WHERE date LIKE ?
-        GROUP BY mealType
-      ''', ['$dateString%']);
-
-      Map<String, Map<String, double>> mealSummary = {};
-
-      for (var row in result) {
-        mealSummary[row['mealType'] as String] = {
-          'totalCalories': (row['totalCalories'] as num?)?.toDouble() ?? 0.0,
-          'totalProtein': (row['totalProtein'] as num?)?.toDouble() ?? 0.0,
-          'totalCarbs': (row['totalCarbs'] as num?)?.toDouble() ?? 0.0,
-          'totalFat': (row['totalFat'] as num?)?.toDouble() ?? 0.0,
-        };
-      }
-
-      return mealSummary;
-    } catch (e) {
-      throw Exception('Failed to get daily nutrition by meal: $e');
-    }
-  }
-
-  // 获取一周的卡路里摄入数据
+  // Get weekly calorie data
   Future<List<Map<String, dynamic>>> getWeeklyCalorieData(
-      DateTime startDate) async {
+      DateTime startDate, DateTime endDate) async {
     try {
       final db = await database;
-      final endDate = startDate.add(const Duration(days: 6));
       final startDateString = startDate.toIso8601String().substring(0, 10);
       final endDateString = endDate.toIso8601String().substring(0, 10);
 
@@ -446,9 +411,9 @@ class DatabaseService {
     }
   }
 
-  // === 数据库维护操作 ===
+  // === Database maintenance operations ===
 
-  // 清理数据库
+  // Clear database
   Future<void> clearAllData() async {
     try {
       final db = await database;
@@ -460,7 +425,7 @@ class DatabaseService {
     }
   }
 
-  // 关闭数据库连接
+  // Close database connection
   Future<void> closeDatabase() async {
     try {
       final db = await database;
@@ -471,7 +436,7 @@ class DatabaseService {
     }
   }
 
-  // 检查数据库是否存在
+  // Check if database exists
   Future<bool> databaseExists() async {
     try {
       final documentsDirectory = await getApplicationDocumentsDirectory();
@@ -482,13 +447,13 @@ class DatabaseService {
     }
   }
 
-  // 获取数据库路径（用于调试）
+  // Get database path (for debugging)
   Future<String> getDatabasePath() async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     return join(documentsDirectory.path, 'calorie_tracker.db');
   }
 
-  // 备份数据库
+  // Backup database
   Future<void> backupDatabase(String backupPath) async {
     try {
       final currentPath = await getDatabasePath();
@@ -504,7 +469,7 @@ class DatabaseService {
     }
   }
 
-  // 恢复数据库
+  // Restore database
   Future<void> restoreDatabase(String backupPath) async {
     try {
       final backupFile = File(backupPath);
@@ -513,17 +478,128 @@ class DatabaseService {
         throw Exception('Backup file does not exist');
       }
 
-      // 关闭当前数据库连接
+      // Close current database connection
       await closeDatabase();
 
-      // 复制备份文件到数据库位置
+      // Copy backup file to database location
       final currentPath = await getDatabasePath();
       await backupFile.copy(currentPath);
 
-      // 重新初始化数据库
+      // Reinitialize database
       _database = await _initDB();
     } catch (e) {
       throw Exception('Failed to restore database: $e');
+    }
+  }
+
+  // Check database integrity
+  Future<bool> checkIntegrity() async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery('PRAGMA integrity_check');
+      return result.isNotEmpty && result.first.values.first == 'ok';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Optimize database (clean up fragmentation)
+  Future<void> optimizeDatabase() async {
+    try {
+      final db = await database;
+      await db.execute('VACUUM');
+      await db.execute('PRAGMA optimize');
+    } catch (e) {
+      throw Exception('Failed to optimize database: $e');
+    }
+  }
+
+  // Get database statistics
+  Future<Map<String, int>> getDatabaseStats() async {
+    try {
+      final db = await database;
+
+      final userCount = await _getTableRowCount(db, 'users');
+      final foodItemCount = await _getTableRowCount(db, 'food_items');
+      final healthGoalCount = await _getTableRowCount(db, 'health_goals');
+
+      return {
+        'userCount': userCount,
+        'foodItemCount': foodItemCount,
+        'healthGoalCount': healthGoalCount,
+      };
+    } catch (e) {
+      throw Exception('Failed to get database statistics: $e');
+    }
+  }
+
+  // Helper method to get table row count
+  Future<int> _getTableRowCount(Database db, String tableName) async {
+    try {
+      final result =
+          await db.rawQuery('SELECT COUNT(*) as count FROM $tableName');
+      return (result.first['count'] as int?) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Export data to JSON format
+  Future<Map<String, dynamic>> exportToJson() async {
+    try {
+      final db = await database;
+
+      final users = await db.query('users');
+      final foodItems = await db.query('food_items');
+      final goals = await db.query('health_goals');
+
+      return {
+        'exportDate': DateTime.now().toIso8601String(),
+        'version': 1,
+        'users': users,
+        'foodItems': foodItems,
+        'healthGoals': goals,
+      };
+    } catch (e) {
+      throw Exception('Failed to export data: $e');
+    }
+  }
+
+  // Import data from JSON format
+  Future<void> importFromJson(Map<String, dynamic> jsonData) async {
+    try {
+      final db = await database;
+
+      await db.transaction((txn) async {
+        // Clear existing data
+        await clearAllData();
+
+        // Import user data
+        final users = jsonData['users'] as List<dynamic>?;
+        if (users != null) {
+          for (final user in users) {
+            await txn.insert('users', user as Map<String, dynamic>);
+          }
+        }
+
+        // Import food items data
+        final foodItems = jsonData['foodItems'] as List<dynamic>?;
+        if (foodItems != null) {
+          for (final item in foodItems) {
+            await txn.insert('food_items', item as Map<String, dynamic>);
+          }
+        }
+
+        // Import health goals data
+        final goals = jsonData['healthGoals'] as List<dynamic>?;
+        if (goals != null) {
+          for (final goal in goals) {
+            await txn.insert('health_goals', goal as Map<String, dynamic>);
+          }
+        }
+      });
+    } catch (e) {
+      throw Exception('Failed to import data: $e');
     }
   }
 }

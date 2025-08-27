@@ -1,7 +1,11 @@
+// lib/utils/app_theme.dart
+
 import 'package:flutter/material.dart';
 
+/// Application theme configuration class
+/// Defines color schemes, text styles, and component themes for the entire app
 class AppTheme {
-  // 应用颜色常量
+  // Application color constants
   static const Color primaryGreen = Color(0xFF4CAF50);
   static const Color primaryGreenDark = Color(0xFF388E3C);
   static const Color primaryGreenLight = Color(0xFF81C784);
@@ -16,7 +20,7 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF757575);
   static const Color textLight = Colors.white;
 
-  // 渐变色
+  // Gradient colors
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [primaryGreen, primaryGreenLight],
     begin: Alignment.topLeft,
@@ -35,7 +39,7 @@ class AppTheme {
     end: Alignment.bottomCenter,
   );
 
-  // 亮色主题
+  // Light theme
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -44,7 +48,7 @@ class AppTheme {
       primaryColor: primaryGreen,
       scaffoldBackgroundColor: backgroundLight,
 
-      // 配色方案
+      // Color scheme
       colorScheme: const ColorScheme.light(
         primary: primaryGreen,
         primaryContainer: primaryGreenLight,
@@ -60,7 +64,7 @@ class AppTheme {
         onError: textLight,
       ),
 
-      // AppBar 主题
+      // AppBar theme
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -74,7 +78,7 @@ class AppTheme {
         iconTheme: IconThemeData(color: textPrimary),
       ),
 
-      // 输入框主题
+      // Input field theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.grey.shade50,
@@ -98,7 +102,7 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
 
-      // 按钮主题
+      // Button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryGreen,
@@ -145,7 +149,7 @@ class AppTheme {
         ),
       ),
 
-      // FloatingActionButton 主题
+      // FloatingActionButton theme
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryGreen,
         foregroundColor: textLight,
@@ -155,7 +159,7 @@ class AppTheme {
         ),
       ),
 
-      // BottomNavigationBar 主题
+      // BottomNavigationBar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surfaceLight,
         selectedItemColor: primaryGreen,
@@ -166,7 +170,7 @@ class AppTheme {
         unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500),
       ),
 
-      // 文本主题
+      // Text theme
       textTheme: const TextTheme(
         displayLarge:
             TextStyle(color: textPrimary, fontWeight: FontWeight.bold),
@@ -195,30 +199,50 @@ class AppTheme {
             TextStyle(color: textSecondary, fontWeight: FontWeight.w500),
       ),
 
-      // 图标主题
+      // Icon theme
       iconTheme: const IconThemeData(
         color: textPrimary,
         size: 24,
       ),
 
-      // 分割线主题
+      // Divider theme
       dividerTheme: DividerThemeData(
         color: Colors.grey.shade300,
         thickness: 1,
         space: 1,
       ),
 
-      // 列表主题
+      // ListTile theme
       listTileTheme: const ListTileThemeData(
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
+
+      // Card theme
+      cardTheme: const CardThemeData(
+        elevation: 2,
+        margin: EdgeInsets.all(8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
+
+      // Chip theme
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.grey.shade100,
+        selectedColor: primaryGreenLight,
+        secondarySelectedColor: primaryGreen,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
     );
   }
 
-  // 深色主题
+  // Dark theme
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -227,7 +251,7 @@ class AppTheme {
       primaryColor: primaryGreen,
       scaffoldBackgroundColor: backgroundDark,
 
-      // 配色方案
+      // Color scheme
       colorScheme: const ColorScheme.dark(
         primary: primaryGreenLight,
         primaryContainer: primaryGreen,
@@ -243,7 +267,7 @@ class AppTheme {
         onError: textLight,
       ),
 
-      // AppBar 主题
+      // AppBar theme
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -257,7 +281,7 @@ class AppTheme {
         iconTheme: IconThemeData(color: textLight),
       ),
 
-      // 输入框主题
+      // Input field theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.grey.shade900,
@@ -281,7 +305,7 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
 
-      // 按钮主题
+      // Button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryGreen,
@@ -299,7 +323,7 @@ class AppTheme {
         ),
       ),
 
-      // FloatingActionButton 主题
+      // FloatingActionButton theme
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryGreen,
         foregroundColor: textLight,
@@ -309,7 +333,7 @@ class AppTheme {
         ),
       ),
 
-      // BottomNavigationBar 主题
+      // BottomNavigationBar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surfaceDark,
         selectedItemColor: primaryGreenLight,
@@ -320,7 +344,7 @@ class AppTheme {
         unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500),
       ),
 
-      // 文本主题
+      // Text theme
       textTheme: const TextTheme(
         displayLarge: TextStyle(color: textLight, fontWeight: FontWeight.bold),
         displayMedium: TextStyle(color: textLight, fontWeight: FontWeight.bold),
@@ -343,22 +367,43 @@ class AppTheme {
             TextStyle(color: textSecondary, fontWeight: FontWeight.w500),
       ),
 
-      // 图标主题
+      // Icon theme
       iconTheme: const IconThemeData(
         color: textLight,
         size: 24,
       ),
 
-      // 分割线主题
+      // Divider theme
       dividerTheme: DividerThemeData(
         color: Colors.grey.shade700,
         thickness: 1,
         space: 1,
       ),
+
+      // Card theme
+      cardTheme: const CardThemeData(
+        elevation: 4,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ), // RoundedRectangleBorder
+        color: surfaceDark,
+      ), // CardThemeData
+
+      // Chip theme
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.grey.shade800,
+        selectedColor: primaryGreen,
+        secondarySelectedColor: primaryGreenLight,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
     );
   }
 
-  // 创建 Material Color
+  // Create Material Color
   static MaterialColor _createMaterialColor(Color color) {
     List strengths = <double>[.05];
     Map<int, Color> swatch = {};
@@ -381,15 +426,15 @@ class AppTheme {
     return MaterialColor(color.value, swatch);
   }
 
-  // 自定义阴影
+  // Custom shadows
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.08),
+          color: Colors.black.withAlpha(20), // Updated for newer Flutter
           blurRadius: 10,
           offset: const Offset(0, 2),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
+          color: Colors.black.withAlpha(10),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
@@ -397,13 +442,13 @@ class AppTheme {
 
   static List<BoxShadow> get buttonShadow => [
         BoxShadow(
-          color: primaryGreen.withValues(alpha: 0.3),
+          color: primaryGreen.withAlpha(76), // 30% opacity
           blurRadius: 8,
           offset: const Offset(0, 4),
         ),
       ];
 
-  // 自定义装饰
+  // Custom decorations
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: surfaceLight,
         borderRadius: BorderRadius.circular(16),
@@ -415,14 +460,14 @@ class AppTheme {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withAlpha(76), // 30% opacity
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       );
 
-  // 常用颜色获取方法
+  // Common color getters for nutrition components
   static Color getProteinColor(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light
           ? const Color(0xFFE57373)
@@ -438,14 +483,36 @@ class AppTheme {
           ? const Color(0xFFFFB74D)
           : const Color(0xFFFF9800);
 
-  // 响应式边距
+  // Status colors
+  static Color get successColor => const Color(0xFF4CAF50);
+  static Color get warningColor => const Color(0xFFFF9800);
+  static Color get errorColor => const Color(0xFFE53935);
+  static Color get infoColor => const Color(0xFF2196F3);
+
+  // BMI status colors
+  static Color getBMIColor(double bmi) {
+    if (bmi < 18.5) return infoColor;
+    if (bmi < 25) return successColor;
+    if (bmi < 30) return warningColor;
+    return errorColor;
+  }
+
+  // Goal progress colors
+  static Color getProgressColor(double progress) {
+    if (progress < 50) return errorColor;
+    if (progress < 80) return warningColor;
+    if (progress <= 100) return successColor;
+    return infoColor; // Over 100%
+  }
+
+  // Responsive padding
   static EdgeInsets getScreenPadding(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth > 600) {
-      // 平板或大屏幕
+      // Tablet or large screen
       return const EdgeInsets.symmetric(horizontal: 32, vertical: 24);
     } else {
-      // 手机屏幕
+      // Phone screen
       return const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
     }
   }
@@ -457,5 +524,137 @@ class AppTheme {
     } else {
       return const EdgeInsets.all(16);
     }
+  }
+
+  // Responsive text sizes
+  static double getHeadingFontSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 600) {
+      return 32;
+    } else {
+      return 24;
+    }
+  }
+
+  static double getBodyFontSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 600) {
+      return 18;
+    } else {
+      return 16;
+    }
+  }
+
+  // Animation durations
+  static const Duration shortAnimation = Duration(milliseconds: 150);
+  static const Duration mediumAnimation = Duration(milliseconds: 300);
+  static const Duration longAnimation = Duration(milliseconds: 500);
+
+  // Border radius values
+  static const double smallRadius = 8.0;
+  static const double mediumRadius = 12.0;
+  static const double largeRadius = 16.0;
+  static const double extraLargeRadius = 24.0;
+
+  // Spacing values
+  static const double spacingXS = 4.0;
+  static const double spacingS = 8.0;
+  static const double spacingM = 16.0;
+  static const double spacingL = 24.0;
+  static const double spacingXL = 32.0;
+  static const double spacingXXL = 48.0;
+
+  // Icon sizes
+  static const double iconSizeSmall = 16.0;
+  static const double iconSizeMedium = 24.0;
+  static const double iconSizeLarge = 32.0;
+  static const double iconSizeXLarge = 48.0;
+
+  // Common UI measurements
+  static const double appBarHeight = 56.0;
+  static const double bottomNavHeight = 60.0;
+  static const double fabSize = 56.0;
+  static const double listItemHeight = 72.0;
+  static const double buttonHeight = 48.0;
+  static const double inputFieldHeight = 56.0;
+
+  // Meal type colors
+  static Color getMealTypeColor(String mealType) {
+    switch (mealType.toLowerCase()) {
+      case 'breakfast':
+        return const Color(0xFFFFB74D); // Orange
+      case 'lunch':
+        return const Color(0xFF4FC3F7); // Blue
+      case 'dinner':
+        return const Color(0xFFAED581); // Green
+      case 'snack':
+        return const Color(0xFFBA68C8); // Purple
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Activity level colors
+  static Color getActivityLevelColor(String activityLevel) {
+    switch (activityLevel.toLowerCase()) {
+      case 'sedentary':
+        return const Color(0xFFE57373); // Light red
+      case 'light':
+        return const Color(0xFFFFB74D); // Orange
+      case 'moderate':
+        return const Color(0xFFAED581); // Light green
+      case 'active':
+        return const Color(0xFF4CAF50); // Green
+      case 'very_active':
+        return const Color(0xFF2E7D32); // Dark green
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Goal type colors
+  static Color getGoalTypeColor(String? goalType) {
+    switch (goalType?.toLowerCase()) {
+      case 'lose':
+        return const Color(0xFFE53935); // Red
+      case 'gain':
+        return const Color(0xFF1976D2); // Blue
+      case 'maintain':
+        return const Color(0xFF4CAF50); // Green
+      case 'custom':
+        return const Color(0xFF9C27B0); // Purple
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Helper method to get contrasting text color
+  static Color getContrastingTextColor(Color backgroundColor) {
+    // Calculate relative luminance
+    final double luminance = backgroundColor.computeLuminance();
+    return luminance > 0.5 ? Colors.black : Colors.white;
+  }
+
+  // Theme-aware color methods
+  static Color getPrimaryTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? textPrimary
+        : textLight;
+  }
+
+  static Color getSecondaryTextColor(BuildContext context) {
+    return textSecondary;
+  }
+
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? backgroundLight
+        : backgroundDark;
+  }
+
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? surfaceLight
+        : surfaceDark;
   }
 }

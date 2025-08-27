@@ -1,28 +1,33 @@
+// lib/utils/calorie_calculator.dart
+
 import '../models/user_profile.dart';
 import '../models/health_goal.dart';
 
-/// 卡路里和营养计算工具类
+/// Calorie and nutrition calculation utility class
 class CalorieCalculator {
-  // 私有构造函数，防止实例化
+  // Private constructor to prevent instantiation
   CalorieCalculator._();
 
-  /// 活动水平系数映射
+  /// Activity level multiplier mapping
   static const Map<String, double> _activityLevelMultipliers = {
-    'sedentary': 1.2, // 久坐：很少或没有运动
-    'light': 1.375, // 轻度活跃：轻度运动或工作 1-3 天/周
-    'moderate': 1.55, // 中度活跃：中度运动或工作 3-5 天/周
-    'active': 1.725, // 活跃：重度运动或工作 6-7 天/周
-    'very_active': 1.9, // 非常活跃：非常重度的体力工作或每日运动
+    'sedentary': 1.2, // Sedentary: little or no exercise
+    'light': 1.375, // Light activity: light exercise or sports 1-3 days/week
+    'moderate':
+        1.55, // Moderate activity: moderate exercise or sports 3-5 days/week
+    'active': 1.725, // Active: heavy exercise or sports 6-7 days/week
+    'very_active':
+        1.9, // Very active: very heavy physical work or daily exercise
   };
 
-  /// 使用 Mifflin-St Jeor 方程计算基础代谢率 (BMR)
+  /// Calculate Basal Metabolic Rate (BMR) using Mifflin-St Jeor equation
   ///
-  /// 公式：
-  /// 男性: BMR = (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) + 5
-  /// 女性: BMR = (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) - 161
+  /// Formula:
+  /// Male: BMR = (10 × weight kg) + (6.25 × height cm) - (5 × age) + 5
+  /// Female: BMR = (10 × weight kg) + (6.25 × height cm) - (5 × age) - 161
   static double calculateBMR(UserProfile profile) {
     if (profile.weight <= 0 || profile.height <= 0 || profile.age <= 0) {
-      throw ArgumentError('用户信息中的体重、身高和年龄必须大于0');
+      throw ArgumentError(
+          'Weight, height and age must be greater than 0 in user profile');
     }
 
     final double baseCalculation =
@@ -34,12 +39,12 @@ class CalorieCalculator {
       case 'female':
         return baseCalculation - 161;
       default:
-        throw ArgumentError('性别必须是 "male" 或 "female"');
+        throw ArgumentError('Gender must be "male" or "female"');
     }
   }
 
-  /// 计算总日常能量消耗 (TDEE)
-  /// TDEE = BMR × 活动水平系数
+  /// Calculate Total Daily Energy Expenditure (TDEE)
+  /// TDEE = BMR × activity level multiplier
   static double calculateTDEE(UserProfile profile) {
     final double bmr = calculateBMR(profile);
     final double activityMultiplier =
@@ -48,10 +53,10 @@ class CalorieCalculator {
     return bmr * activityMultiplier;
   }
 
-  /// 根据目标类型计算目标卡路里
+  /// Calculate target calories based on goal type
   ///
-  /// [goalType]: 'maintain' (维持), 'lose' (减重), 'gain' (增重)
-  /// [weeklyWeightChange]: 每周体重变化目标 (kg)，正数为增重，负数为减重
+  /// [goalType]: 'maintain' (maintain), 'lose' (lose weight), 'gain' (gain weight)
+  /// [weeklyWeightChange]: weekly weight change goal (kg), positive for gain, negative for loss
   static double calculateTargetCalories(
     UserProfile profile, {
     String goalType = 'maintain',
@@ -59,51 +64,59 @@ class CalorieCalculator {
   }) {
     final double tdee = calculateTDEE(profile);
 
-    // 1kg脂肪约等于7700卡路里
+    // 1kg fat approximately equals 7700 calories
     const double caloriesPerKg = 7700;
 
     switch (goalType.toLowerCase()) {
       case 'maintain':
         return tdee;
       case 'lose':
-        // 健康减重：每周0.5-1kg，对应每日赤字250-500卡路里
+        // Healthy weight loss: 0.5-1kg per week, corresponding to 250-500 calorie deficit per day
         final double dailyDeficit =
             weeklyWeightChange.abs() * caloriesPerKg / 7;
-        return (tdee - dailyDeficit).clamp(1200, tdee); // 最低不少于1200卡路里
+        return (tdee - dailyDeficit)
+            .clamp(1200, tdee); // Minimum not less than 1200 calories
       case 'gain':
-        // 健康增重：每周0.25-0.5kg，对应每日盈余250-500卡路里
+        // Healthy weight gain: 0.25-0.5kg per week, corresponding to 250-500 calorie surplus per day
         final double dailySurplus = weeklyWeightChange * caloriesPerKg / 7;
         return tdee + dailySurplus;
       default:
-        throw ArgumentError('无效的目标类型: $goalType');
+        throw ArgumentError('Invalid goal type: $goalType');
     }
   }
 
-  /// 计算推荐的宏量营养素分配
+  /// Calculate recommended macronutrient distribution
   ///
-  /// 返回格式: {'protein': g, 'carbs': g, 'fat': g}
-  /// [macroRatio]: 宏量营养素比例 [蛋白质%, 碳水%, 脂肪%]
+  /// Returns format: {'protein': g, 'carbs': g, 'fat': g}
+  /// [macroRatio]: macronutrient ratio [protein%, carbs%, fat%]
   static Map<String, double> calculateMacronutrients(
     double targetCalories, {
-    List<double> macroRatio = const [25, 45, 30], // 默认: 25% 蛋白质, 45% 碳水, 30% 脂肪
+    List<double> macroRatio = const [
+      25,
+      45,
+      30
+    ], // Default: 25% protein, 45% carbs, 30% fat
   }) {
     if (macroRatio.length != 3) {
-      throw ArgumentError('宏量营养素比例必须包含3个值: [蛋白质%, 碳水%, 脂肪%]');
+      throw ArgumentError(
+          'Macro ratio must contain 3 values: [protein%, carbs%, fat%]');
     }
 
     final double totalRatio = macroRatio.fold(0, (sum, ratio) => sum + ratio);
     if ((totalRatio - 100).abs() > 0.01) {
-      throw ArgumentError('宏量营养素比例总和必须等于100%');
+      throw ArgumentError('Macro ratio total must equal 100%');
     }
 
     return {
-      'protein': (targetCalories * macroRatio[0] / 100) / 4, // 蛋白质: 4卡路里/克
-      'carbs': (targetCalories * macroRatio[1] / 100) / 4, // 碳水: 4卡路里/克
-      'fat': (targetCalories * macroRatio[2] / 100) / 9, // 脂肪: 9卡路里/克
+      'protein': (targetCalories * macroRatio[0] / 100) /
+          4, // Protein: 4 calories/gram
+      'carbs':
+          (targetCalories * macroRatio[1] / 100) / 4, // Carbs: 4 calories/gram
+      'fat': (targetCalories * macroRatio[2] / 100) / 9, // Fat: 9 calories/gram
     };
   }
 
-  /// 基于用户档案创建健康目标
+  /// Create health goal based on user profile
   static HealthGoal createHealthGoalForUser(
     UserProfile profile, {
     String goalType = 'maintain',
@@ -131,26 +144,34 @@ class CalorieCalculator {
     );
   }
 
-  /// 根据目标类型获取默认宏量营养素比例
+  /// Get default macronutrient ratio based on goal type
   static List<double> _getDefaultMacroRatio(String goalType) {
     switch (goalType.toLowerCase()) {
       case 'lose':
-        return [30, 40, 30]; // 减重: 高蛋白，中碳水，中脂肪
+        return [
+          30,
+          40,
+          30
+        ]; // Weight loss: high protein, moderate carbs, moderate fat
       case 'gain':
-        return [25, 45, 30]; // 增重: 中蛋白，高碳水，中脂肪
+        return [
+          25,
+          45,
+          30
+        ]; // Weight gain: moderate protein, high carbs, moderate fat
       case 'maintain':
       default:
-        return [25, 45, 30]; // 维持: 均衡分配
+        return [25, 45, 30]; // Maintenance: balanced distribution
     }
   }
 
-  /// 计算理想体重范围 (BMI 18.5-24.9)
+  /// Calculate ideal weight range (BMI 18.5-24.9)
   static Map<String, double> calculateIdealWeightRange(double height) {
     if (height <= 0) {
-      throw ArgumentError('身高必须大于0');
+      throw ArgumentError('Height must be greater than 0');
     }
 
-    // 将身高从厘米转换为米
+    // Convert height from centimeters to meters
     final double heightInMeters = height / 100;
 
     return {
@@ -159,41 +180,54 @@ class CalorieCalculator {
     };
   }
 
-  /// 计算BMI
+  /// Calculate BMI
   static double calculateBMI(double weight, double height) {
     if (weight <= 0 || height <= 0) {
-      throw ArgumentError('体重和身高必须大于0');
+      throw ArgumentError('Weight and height must be greater than 0');
     }
 
     final double heightInMeters = height / 100;
     return weight / (heightInMeters * heightInMeters);
   }
 
-  /// 获取BMI分类
+  /// Get BMI category
   static String getBMICategory(double bmi) {
     if (bmi < 18.5) {
-      return '体重过轻';
+      return 'Underweight';
     } else if (bmi < 25) {
-      return '正常体重';
+      return 'Normal weight';
     } else if (bmi < 30) {
-      return '超重';
+      return 'Overweight';
     } else {
-      return '肥胖';
+      return 'Obese';
     }
   }
 
-  /// 计算目标完成百分比
-  static double calculateGoalProgress(double actual, double target) {
-    if (target <= 0) return 0;
-    return (actual / target * 100).clamp(0, 200); // 最高200%
+  /// Get BMI status for color coding
+  static String getBMIStatus(double bmi) {
+    if (bmi < 18.5) {
+      return 'low';
+    } else if (bmi < 25) {
+      return 'normal';
+    } else if (bmi < 30) {
+      return 'high';
+    } else {
+      return 'very_high';
+    }
   }
 
-  /// 计算剩余卡路里
+  /// Calculate goal completion percentage
+  static double calculateGoalProgress(double actual, double target) {
+    if (target <= 0) return 0;
+    return (actual / target * 100).clamp(0, 200); // Maximum 200%
+  }
+
+  /// Calculate remaining calories
   static double calculateRemainingCalories(double consumed, double target) {
     return target - consumed;
   }
 
-  /// 计算一段时间内的平均每日摄入
+  /// Calculate average daily intake over a period
   static Map<String, double> calculateAverageIntake(
       List<Map<String, double>> dailyIntakes) {
     if (dailyIntakes.isEmpty) {
@@ -227,13 +261,13 @@ class CalorieCalculator {
     };
   }
 
-  /// 计算达到目标体重所需的时间（天）
+  /// Calculate time needed to reach target weight (days)
   static int calculateTimeToGoal({
     required double currentWeight,
     required double targetWeight,
     required double dailyCalorieDeficitOrSurplus,
   }) {
-    if (dailyCalorieDeficitOrSurplus == 0) return -1; // 无法达到目标
+    if (dailyCalorieDeficitOrSurplus == 0) return -1; // Cannot reach goal
 
     const double caloriesPerKg = 7700;
     final double weightDifference = (targetWeight - currentWeight).abs();
@@ -242,39 +276,291 @@ class CalorieCalculator {
     return (totalCaloriesNeeded / dailyCalorieDeficitOrSurplus.abs()).ceil();
   }
 
-  /// 验证营养数据的合理性
+  /// Calculate estimated weight change based on calorie deficit/surplus
+  static double calculateWeightChange({
+    required double dailyCalorieChange,
+    required int days,
+  }) {
+    const double caloriesPerKg = 7700;
+    final double totalCalorieChange = dailyCalorieChange * days;
+    return totalCalorieChange / caloriesPerKg;
+  }
+
+  /// Validate nutrition data reasonableness
   static bool validateNutritionData({
     required double calories,
     required double protein,
     required double carbs,
     required double fat,
   }) {
-    // 检查负值
+    // Check for negative values
     if (calories < 0 || protein < 0 || carbs < 0 || fat < 0) {
       return false;
     }
 
-    // 计算宏量营养素总卡路里
+    // Calculate total macro calories
     final double macroCalories = (protein * 4) + (carbs * 4) + (fat * 9);
 
-    // 允许±20%的误差范围（考虑到纤维、酒精等其他成分）
+    // Allow ±20% tolerance (considering fiber, alcohol and other components)
     final double tolerance = calories * 0.2;
 
     return (macroCalories - calories).abs() <= tolerance;
   }
 
-  /// 格式化卡路里显示
+  /// Calculate protein requirements based on activity level and goals
+  static double calculateProteinRequirement(UserProfile profile,
+      {String goalType = 'maintain'}) {
+    final double weightInKg = profile.weight;
+
+    // Base protein requirement (g/kg body weight)
+    double proteinPerKg;
+
+    switch (goalType.toLowerCase()) {
+      case 'lose':
+        // Higher protein for weight loss to preserve muscle mass
+        switch (profile.activityLevel) {
+          case 'sedentary':
+            proteinPerKg = 1.6;
+            break;
+          case 'light':
+            proteinPerKg = 1.8;
+            break;
+          case 'moderate':
+          case 'active':
+          case 'very_active':
+            proteinPerKg = 2.0;
+            break;
+          default:
+            proteinPerKg = 1.6;
+        }
+        break;
+      case 'gain':
+        // Moderate protein for weight gain
+        switch (profile.activityLevel) {
+          case 'sedentary':
+          case 'light':
+            proteinPerKg = 1.4;
+            break;
+          case 'moderate':
+            proteinPerKg = 1.6;
+            break;
+          case 'active':
+          case 'very_active':
+            proteinPerKg = 1.8;
+            break;
+          default:
+            proteinPerKg = 1.4;
+        }
+        break;
+      case 'maintain':
+      default:
+        // Standard protein for maintenance
+        switch (profile.activityLevel) {
+          case 'sedentary':
+            proteinPerKg = 1.2;
+            break;
+          case 'light':
+            proteinPerKg = 1.4;
+            break;
+          case 'moderate':
+            proteinPerKg = 1.6;
+            break;
+          case 'active':
+          case 'very_active':
+            proteinPerKg = 1.8;
+            break;
+          default:
+            proteinPerKg = 1.2;
+        }
+    }
+
+    return weightInKg * proteinPerKg;
+  }
+
+  /// Calculate water intake recommendation (liters per day)
+  static double calculateWaterIntake(UserProfile profile,
+      {double additionalForExercise = 0.0}) {
+    final double weightInKg = profile.weight;
+
+    // Base water requirement: 35ml per kg body weight
+    double baseWaterLiters = (weightInKg * 35) / 1000;
+
+    // Activity level adjustment
+    double activityAdjustment = 0.0;
+    switch (profile.activityLevel) {
+      case 'light':
+        activityAdjustment = 0.3;
+        break;
+      case 'moderate':
+        activityAdjustment = 0.5;
+        break;
+      case 'active':
+        activityAdjustment = 0.7;
+        break;
+      case 'very_active':
+        activityAdjustment = 1.0;
+        break;
+      default:
+        activityAdjustment = 0.0;
+    }
+
+    return baseWaterLiters + activityAdjustment + additionalForExercise;
+  }
+
+  /// Get health recommendations based on profile and goals
+  static List<String> getHealthRecommendations(UserProfile profile,
+      {HealthGoal? goal}) {
+    final recommendations = <String>[];
+    final bmi = calculateBMI(profile.weight, profile.height);
+
+    // BMI-based recommendations
+    if (bmi < 18.5) {
+      recommendations
+          .add('Consider gaining weight through healthy diet and exercise');
+      recommendations.add('Increase protein and healthy fat intake');
+    } else if (bmi > 25) {
+      recommendations
+          .add('Consider weight management through balanced diet and exercise');
+      recommendations
+          .add('Focus on portion control and regular physical activity');
+    } else {
+      recommendations.add('Maintain your current healthy weight range');
+    }
+
+    // Age-based recommendations
+    if (profile.age >= 50) {
+      recommendations.add('Consider increasing calcium and vitamin D intake');
+      recommendations.add('Include low-impact exercises and strength training');
+    } else if (profile.age <= 25) {
+      recommendations.add('Great time to establish healthy eating habits');
+      recommendations
+          .add('Vary your exercise routine to build overall fitness');
+    }
+
+    // Activity level recommendations
+    if (profile.activityLevel == 'sedentary') {
+      recommendations.add('Try to increase daily physical activity');
+      recommendations.add('Start with 30 minutes of walking daily');
+    } else if (profile.activityLevel == 'very_active') {
+      recommendations.add('Ensure adequate recovery time between workouts');
+      recommendations
+          .add('Focus on proper nutrition to support high activity levels');
+    }
+
+    // Goal-specific recommendations
+    if (goal != null) {
+      switch (goal.goalType?.toLowerCase()) {
+        case 'lose':
+          recommendations.add(
+              'Create a moderate calorie deficit for sustainable weight loss');
+          recommendations
+              .add('Focus on protein-rich foods to preserve muscle mass');
+          break;
+        case 'gain':
+          recommendations
+              .add('Eat in a controlled calorie surplus with quality foods');
+          recommendations
+              .add('Include strength training to build lean muscle mass');
+          break;
+        case 'maintain':
+          recommendations.add('Continue your current balanced approach');
+          recommendations.add('Monitor your weight and adjust as needed');
+          break;
+      }
+    }
+
+    return recommendations;
+  }
+
+  /// Format calories for display
   static String formatCalories(double calories) {
     return calories.round().toString();
   }
 
-  /// 格式化宏量营养素显示
+  /// Format macronutrient for display
   static String formatMacro(double grams, {int decimals = 1}) {
     return grams.toStringAsFixed(decimals);
   }
 
-  /// 格式化百分比显示
+  /// Format percentage for display
   static String formatPercentage(double percentage, {int decimals = 1}) {
     return '${percentage.toStringAsFixed(decimals)}%';
+  }
+
+  /// Format weight for display
+  static String formatWeight(double weight, {int decimals = 1}) {
+    return weight % 1 == 0
+        ? '${weight.toInt()} kg'
+        : '${weight.toStringAsFixed(decimals)} kg';
+  }
+
+  /// Calculate calories burned during exercise (basic estimation)
+  static double calculateExerciseCalories({
+    required double weightKg,
+    required int durationMinutes,
+    required double metValue, // Metabolic Equivalent of Task
+  }) {
+    // Calories burned = MET × weight(kg) × duration(hours)
+    final double durationHours = durationMinutes / 60.0;
+    return metValue * weightKg * durationHours;
+  }
+
+  /// Get common MET values for different activities
+  static Map<String, double> getCommonMETValues() {
+    return {
+      'walking_slow': 2.5,
+      'walking_moderate': 3.5,
+      'walking_fast': 4.3,
+      'running_6mph': 9.8,
+      'running_8mph': 11.8,
+      'cycling_moderate': 5.8,
+      'cycling_vigorous': 8.0,
+      'swimming_moderate': 5.8,
+      'swimming_vigorous': 9.8,
+      'strength_training': 3.5,
+      'yoga': 2.5,
+      'dancing': 4.8,
+      'cleaning': 3.3,
+      'gardening': 4.0,
+    };
+  }
+
+  /// Calculate body fat percentage using Navy formula (estimation)
+  static double? calculateBodyFatPercentage({
+    required UserProfile profile,
+    required double neckCircumference, // cm
+    required double waistCircumference, // cm
+    double? hipCircumference, // cm (required for females)
+  }) {
+    final height = profile.height;
+    final isMale = profile.gender.toLowerCase() == 'male';
+
+    if (isMale) {
+      // Male formula: 495 / (1.0324 - 0.19077 × log10(waist - neck) + 0.15456 × log10(height)) - 450
+      final value1 = waistCircumference - neckCircumference;
+      final value2 = height;
+
+      if (value1 <= 0 || value2 <= 0) return null;
+
+      final logValue1 = (value1 * 0.19077) / 2.302585; // Convert to log10
+      final logValue2 = (value2 * 0.15456) / 2.302585;
+
+      final bodyDensity = 1.0324 - logValue1 + logValue2;
+      return (495 / bodyDensity) - 450;
+    } else {
+      // Female formula requires hip measurement
+      if (hipCircumference == null) return null;
+
+      final value1 = waistCircumference + hipCircumference - neckCircumference;
+      final value2 = height;
+
+      if (value1 <= 0 || value2 <= 0) return null;
+
+      final logValue1 = (value1 * 0.35004) / 2.302585;
+      final logValue2 = (value2 * 0.22100) / 2.302585;
+
+      final bodyDensity = 1.29579 - logValue1 + logValue2;
+      return (495 / bodyDensity) - 450;
+    }
   }
 }

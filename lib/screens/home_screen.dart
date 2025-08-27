@@ -1,12 +1,11 @@
+// lib/screens/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/nutrition_provider.dart';
-import '../utils/app_theme.dart';
-import '../widgets/circular_progress_widget.dart';
-import '../widgets/nutrition_card.dart';
-import '../widgets/meal_section.dart';
-import '../widgets/quick_add_buttons.dart';
+import '../screens/history_screen.dart';
+import '../screens/nutrition_overview_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // 初始化数据
+    // Initialize data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
     });
@@ -44,17 +43,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: const [
-          _HomeContent(),
-          _HistoryContent(),
-          _StatsContent(),
-          _ProfileContent(),
+        children: [
+          // 使用我们创建的 NutritionOverviewScreen 而不是自定义的 _HomeContent
+          const NutritionOverviewScreen(),
+          const HistoryScreen(),
+          _buildPlaceholderPage('Statistics', Icons.analytics),
+          _ProfileContent(
+            onNavigateToTab: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton:
-          _currentIndex == 0 ? _buildFloatingActionButton() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // floatingActionButton:
+      //     _currentIndex == 0 ? _buildFloatingActionButton() : null,
+      // floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -67,22 +73,24 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       },
       type: BottomNavigationBarType.fixed,
+      selectedItemColor: Theme.of(context).colorScheme.primary,
+      unselectedItemColor: Theme.of(context).colorScheme.outline,
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          label: '主页',
+          label: 'Home',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.history),
-          label: '历史',
+          label: 'History',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.analytics),
-          label: '统计',
+          label: 'Stats',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
-          label: '设置',
+          label: 'Profile',
         ),
       ],
     );
@@ -96,88 +104,104 @@ class _HomeScreenState extends State<HomeScreen> {
       child: const Icon(Icons.add),
     );
   }
-}
 
-class _HomeContent extends StatelessWidget {
-  const _HomeContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: AppTheme.getScreenPadding(context),
+  Widget _buildPlaceholderPage(String title, IconData icon) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context),
+            _buildStatsOverview(context),
             const SizedBox(height: 24),
-            _buildCalorieProgress(context),
-            const SizedBox(height: 24),
-            _buildNutritionOverview(context),
-            const SizedBox(height: 24),
-            const QuickAddButtons(),
-            const SizedBox(height: 24),
-            _buildMealSections(context),
-            const SizedBox(height: 80), // 底部留白，避免被FAB遮挡
+            _buildComingSoonSection(context, title, icon),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Consumer<UserProvider>(
-      builder: (context, userProvider, child) {
-        final userName = userProvider.userProfile?.name ?? '用户';
-
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+  Widget _buildStatsOverview(BuildContext context) {
+    return Consumer2<NutritionProvider, UserProvider>(
+      builder: (context, nutritionProvider, userProvider, child) {
+        return Card(
+          elevation: 2,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '你好，$userName',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.analytics,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Today\'s Overview',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _getDateString(),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).textTheme.bodySmall?.color,
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatItem(
+                        context,
+                        'Calories',
+                        '${nutritionProvider.todayTotalCalories.toInt()}',
+                        Colors.orange,
+                        Icons.local_fire_department,
                       ),
+                    ),
+                    Expanded(
+                      child: _buildStatItem(
+                        context,
+                        'Protein',
+                        '${nutritionProvider.todayTotalProtein.toInt()}g',
+                        Colors.blue,
+                        Icons.fitness_center,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatItem(
+                        context,
+                        'Carbs',
+                        '${nutritionProvider.todayTotalCarbs.toInt()}g',
+                        Colors.green,
+                        Icons.grain,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildStatItem(
+                        context,
+                        'Fat',
+                        '${nutritionProvider.todayTotalFat.toInt()}g',
+                        Colors.purple,
+                        Icons.opacity,
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-            IconButton(
-              onPressed: () {
-                // 显示通知或设置
-              },
-              icon: const Icon(Icons.notifications_outlined),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildCalorieProgress(BuildContext context) {
-    return Consumer2<UserProvider, NutritionProvider>(
-      builder: (context, userProvider, nutritionProvider, child) {
-        final goal = userProvider.currentHealthGoal;
-        final consumed = nutritionProvider.todayTotalCalories;
-        final target = goal?.targetCalories ?? 2000;
-
-        return Card(
-          child: Padding(
-            padding: AppTheme.getCardPadding(context),
-            child: CircularProgressWidget(
-              current: consumed,
-              target: target,
-              title: '今日卡路里',
-              unit: 'kcal',
             ),
           ),
         );
@@ -185,240 +209,413 @@ class _HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildNutritionOverview(BuildContext context) {
-    return Consumer2<UserProvider, NutritionProvider>(
-      builder: (context, userProvider, nutritionProvider, child) {
-        final goal = userProvider.currentHealthGoal;
-
-        if (goal == null) {
-          return Card(
-            child: Padding(
-              padding: AppTheme.getCardPadding(context),
-              child: Column(
-                children: [
-                  const Icon(Icons.info_outline, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    '请先设置健康目标',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/goals');
-                    },
-                    child: const Text('设置目标'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(
-              child: NutritionCard(
-                title: '蛋白质',
-                current: nutritionProvider.todayTotalProtein,
-                target: goal.targetProtein,
-                unit: 'g',
-                color: AppTheme.getProteinColor(context),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: NutritionCard(
-                title: '碳水',
-                current: nutritionProvider.todayTotalCarbs,
-                target: goal.targetCarbs,
-                unit: 'g',
-                color: AppTheme.getCarbsColor(context),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: NutritionCard(
-                title: '脂肪',
-                current: nutritionProvider.todayTotalFat,
-                target: goal.targetFat,
-                unit: 'g',
-                color: AppTheme.getFatColor(context),
-              ),
-            ),
-          ],
-        );
-      },
+  Widget _buildStatItem(BuildContext context, String label, String value,
+      Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildMealSections(BuildContext context) {
-    return Consumer<NutritionProvider>(
-      builder: (context, nutritionProvider, child) {
-        final mealTypes = [
-          {'type': 'breakfast', 'title': '早餐', 'icon': Icons.wb_sunny},
-          {'type': 'lunch', 'title': '午餐', 'icon': Icons.wb_sunny_outlined},
-          {'type': 'dinner', 'title': '晚餐', 'icon': Icons.nights_stay},
-          {'type': 'snack', 'title': '零食', 'icon': Icons.cookie},
-        ];
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildComingSoonSection(
+      BuildContext context, String title, IconData icon) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
           children: [
+            Icon(
+              icon,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
             Text(
-              '今日饮食',
+              'Advanced $title',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            const SizedBox(height: 16),
-            ...mealTypes
-                .map((meal) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: MealSection(
-                        mealType: meal['type'] as String,
-                        title: meal['title'] as String,
-                        icon: meal['icon'] as IconData,
-                        foodItems: nutritionProvider
-                            .getFoodItemsByMealType(meal['type'] as String),
-                        onAddFood: () =>
-                            _addFood(context, meal['type'] as String),
-                        onFoodTap: (foodItem) => _editFood(context, foodItem),
-                        onFoodDelete: (foodItem) =>
-                            _deleteFood(context, nutritionProvider, foodItem),
-                      ),
-                    ))
-                .toList(),
+            const SizedBox(height: 8),
+            Text(
+              'Detailed charts, trends, and insights coming soon in the next update',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _currentIndex = 1; // Navigate to history
+                });
+              },
+              icon: const Icon(Icons.history),
+              label: const Text('View History Instead'),
+            ),
           ],
-        );
-      },
-    );
-  }
-
-  void _addFood(BuildContext context, String mealType) {
-    Navigator.pushNamed(
-      context,
-      '/add-food',
-      arguments: {'mealType': mealType},
-    );
-  }
-
-  void _editFood(BuildContext context, foodItem) {
-    Navigator.pushNamed(
-      context,
-      '/add-food',
-      arguments: {'foodItem': foodItem, 'isEdit': true},
-    );
-  }
-
-  void _deleteFood(
-      BuildContext context, NutritionProvider provider, foodItem) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除食物'),
-        content: Text('确定要删除 "${foodItem.name}" 吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true && foodItem.id != null) {
-      final success =
-          await provider.deleteFoodItem(foodItem.id!, foodItem.date);
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('食物已删除')),
-        );
-      }
-    }
-  }
-
-  String _getDateString() {
-    final now = DateTime.now();
-    final weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
-    final weekday = weekdays[now.weekday - 1];
-
-    return '${now.month}月${now.day}日 $weekday';
-  }
-}
-
-// 临时的占位页面
-class _HistoryContent extends StatelessWidget {
-  const _HistoryContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('历史记录页面', style: TextStyle(fontSize: 18)),
-          Text('即将推出...', style: TextStyle(color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsContent extends StatelessWidget {
-  const _StatsContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.analytics, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('数据统计页面', style: TextStyle(fontSize: 18)),
-          Text('即将推出...', style: TextStyle(color: Colors.grey)),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _ProfileContent extends StatelessWidget {
-  const _ProfileContent();
+  final Function(int) onNavigateToTab;
+
+  const _ProfileContent({required this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.person, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          const Text('个人设置页面', style: TextStyle(fontSize: 18)),
-          const Text('即将推出...', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            child: const Text('编辑个人资料'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildProfileHeader(context),
+            const SizedBox(height: 24),
+            _buildHealthStats(context),
+            const SizedBox(height: 24),
+            _buildSettingsSection(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        final user = userProvider.userProfile;
+        final goal = userProvider.currentHealthGoal;
+
+        return Card(
+          elevation: 2,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Text(
+                    user?.name.substring(0, 1).toUpperCase() ?? 'U',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  user?.name ?? 'User',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                if (user != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '${user.age} years old • ${_capitalizeFirst(user.gender)}',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.7),
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildProfileStat(
+                          context, 'Height', '${user.height.toInt()} cm'),
+                      _buildProfileStat(
+                          context, 'Weight', '${user.weight.toInt()} kg'),
+                      _buildProfileStat(context, 'Goal',
+                          '${goal?.targetCalories.toInt() ?? 0} cal'),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/goals');
-            },
-            child: const Text('设置健康目标'),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileStat(BuildContext context, String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHealthStats(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        final user = userProvider.userProfile;
+        if (user == null) return const SizedBox.shrink();
+
+        final bmi = userProvider.currentBMI ?? 0.0;
+        final tdee = userProvider.currentTDEE ?? 0.0;
+
+        return Card(
+          elevation: 1,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Health Metrics',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildHealthMetric(context, 'BMI',
+                          bmi.toStringAsFixed(1), _getBMIColor(bmi)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildHealthMetric(
+                          context, 'TDEE', '${tdee.toInt()} cal', Colors.green),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Activity Level: ${_formatActivityLevel(user.activityLevel)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
+                      ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHealthMetric(
+      BuildContext context, String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSettingsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Settings',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 16),
+        _buildSettingsTile(
+          context,
+          'Edit Profile',
+          'Update your personal information',
+          Icons.person_outline,
+          () => Navigator.pushNamed(context, '/profile'),
+        ),
+        _buildSettingsTile(
+          context,
+          'Health Goals',
+          'Set your nutrition targets',
+          Icons.flag_outlined,
+          () => Navigator.pushNamed(context, '/goals'),
+        ),
+        _buildSettingsTile(
+          context,
+          'History',
+          'Browse past records',
+          Icons.history,
+          () => onNavigateToTab(1),
+        ),
+        _buildSettingsTile(
+          context,
+          'Statistics',
+          'View detailed analytics',
+          Icons.analytics_outlined,
+          () => onNavigateToTab(2),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsTile(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        ),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Theme.of(context).colorScheme.outline,
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  String _capitalizeFirst(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  String _formatActivityLevel(String level) {
+    switch (level) {
+      case 'sedentary':
+        return 'Sedentary';
+      case 'light':
+        return 'Light Activity';
+      case 'moderate':
+        return 'Moderate Activity';
+      case 'active':
+        return 'Very Active';
+      case 'extra':
+        return 'Extremely Active';
+      default:
+        return 'Moderate Activity';
+    }
+  }
+
+  Color _getBMIColor(double bmi) {
+    if (bmi < 18.5) return Colors.blue;
+    if (bmi < 25) return Colors.green;
+    if (bmi < 30) return Colors.orange;
+    return Colors.red;
   }
 }

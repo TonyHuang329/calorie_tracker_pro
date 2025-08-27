@@ -1,3 +1,5 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -6,20 +8,23 @@ import 'services/database_service.dart';
 import 'providers/app_provider.dart';
 import 'providers/nutrition_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/ai_provider.dart'; // NEW: AI Provider
 import 'screens/home_screen.dart';
 import 'screens/profile_settings_screen.dart';
 import 'screens/health_goals_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/add_food_screen.dart';
+import 'screens/ai_camera_screen.dart'; // NEW: AI Camera Screen
+import 'screens/food_search_screen.dart'; // NEW: Food Search Screen
 import 'utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化数据库
+  // Initialize database
   await DatabaseService().database;
 
-  // 设置状态栏样式
+  // Set status bar style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -40,11 +45,12 @@ class CalorieTrackerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => NutritionProvider()),
+        ChangeNotifierProvider(create: (_) => AIProvider()), // NEW: AI Provider
       ],
       child: Consumer<AppProvider>(
         builder: (context, appProvider, child) {
           return MaterialApp(
-            title: '卡路里追踪',
+            title: 'Calorie Tracker Pro',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: appProvider.themeMode,
@@ -56,6 +62,10 @@ class CalorieTrackerApp extends StatelessWidget {
               '/goals': (context) => const HealthGoalsScreen(),
               '/history': (context) => const HistoryScreen(),
               '/add-food': (context) => const AddFoodScreen(),
+              '/ai-camera': (context) =>
+                  const AICameraScreen(), // NEW: AI Camera route
+              '/food-search': (context) =>
+                  const FoodSearchScreen(), // NEW: Food Search route
             },
           );
         },
@@ -76,13 +86,14 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
 
   @override
   void initState() {
     super.initState();
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
@@ -91,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeInOut),
+      curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
     ));
 
     _scaleAnimation = Tween<double>(
@@ -99,7 +110,15 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.0, 0.5, curve: Curves.elasticOut),
+      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+    ));
+
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.easeInOut),
     ));
 
     _startAnimation();
@@ -108,27 +127,61 @@ class _SplashScreenState extends State<SplashScreen>
   void _startAnimation() async {
     await _animationController.forward();
 
-    // 检查用户是否已经设置了个人资料
+    // Initialize services and check user status
     if (!mounted) return;
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.loadUserProfile();
+    await _initializeApp();
+  }
 
-    if (!mounted) return;
+  Future<void> _initializeApp() async {
+    try {
+      // Load user profile
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await userProvider.loadUserProfile();
 
-    if (userProvider.userProfile == null) {
-      // 新用户，跳转到个人资料设置
-      Navigator.of(context).pushReplacementNamed('/profile');
-    } else {
-      // 已有用户，跳转到主页
-      final nutritionProvider =
-          Provider.of<NutritionProvider>(context, listen: false);
-      await nutritionProvider.loadTodayNutrition();
+      // Initialize AI service in background (non-blocking)
+      final aiProvider = Provider.of<AIProvider>(context, listen: false);
+      aiProvider.initializeAI(); // Don't await - runs in background
 
+      if (!mounted) return;
+
+      // Navigate based on user profile status
+      if (userProvider.userProfile == null) {
+        // New user, navigate to profile setup
+        Navigator.of(context).pushReplacementNamed('/profile');
+      } else {
+        // Existing user, load today's nutrition and navigate to home
+        final nutritionProvider =
+            Provider.of<NutritionProvider>(context, listen: false);
+        await nutritionProvider.loadTodayNutrition();
+
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
+      }
+    } catch (e) {
+      // Handle initialization errors
+      if (mounted) {
+        _showErrorAndNavigate('Failed to initialize app: $e');
+      }
+    }
+  }
+
+  void _showErrorAndNavigate(String error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    // Navigate to home anyway after delay
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/home');
       }
-    }
+    });
   }
 
   @override
@@ -140,71 +193,148 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).primaryColor,
+              Theme.of(context).primaryColor.withOpacity(0.8),
+              Theme.of(context).colorScheme.secondary,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // App Icon with rotation animation
+                        RotationTransition(
+                          turns: _rotationAnimation,
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.restaurant_menu,
+                              size: 60,
+                              color: Theme.of(context).primaryColor,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.restaurant_menu,
-                        size: 60,
-                        color: Color(0xFF4CAF50),
-                      ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // App Title
+                        Text(
+                          'Calorie Tracker Pro',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.3),
+                                offset: const Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Subtitle with AI emphasis
+                        Text(
+                          'AI-Powered Nutrition Tracking',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Feature highlights
+                        Text(
+                          'Smart • Simple • Accurate',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+
+                        const SizedBox(height: 60),
+
+                        // Loading animation
+                        SizedBox(
+                          width: 50,
+                          height: 50,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white.withOpacity(0.8),
+                            ),
+                            strokeWidth: 3,
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Loading text
+                        Text(
+                          'Initializing AI models...',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+
+                        const SizedBox(height: 100),
+
+                        // Version info
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Text(
+                            'Version 1.0.0',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 30),
-                    const Text(
-                      '卡路里追踪',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      '健康生活，从记录开始',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 50),
-                    const SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
